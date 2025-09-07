@@ -1,3 +1,4 @@
+// apps/web/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,8 +9,92 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String         @id @default(cuid())
+  email     String         @unique
   name      String?
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime       @updatedAt      @db.Timestamptz(3)
+
+  sleeps    SleepSession[]
+  vitals    VitalSample[]
+  labs      LabResult[]
 }
+
+// 1回の睡眠
+model SleepSession {
+  id          String   @id @default(cuid())
+  userId      String
+  startedAt   DateTime @db.Timestamptz(3)  // UTCで保存
+  endedAt     DateTime @db.Timestamptz(3)  // UTCで保存
+  totalMin    Int
+  remMin      Int?
+  deepMin     Int?
+  hrAvg       Int?
+  hrvMs       Int?
+  source      String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt      @db.Timestamptz(3)
+
+  user        User      @relation(fields: [userId], references: [id])
+
+  // 直近順取得や範囲検索で効く
+  @@index([userId, startedAt])
+  @@index([userId, endedAt])
+
+  // 1人の同一セッションの重複防止（同じ startedAt は1件に）
+  @@unique([userId, startedAt], name: "unique_sleep_per_user_started")
+}
+
+// バイタル（1点データ）
+model VitalSample {
+  id         String    @id @default(cuid())
+  userId     String
+  kind       VitalKind
+  valueNum   Decimal   @db.Decimal(7,2)     // 例: 99999.99 まで、用途に応じて桁数調整
+  unit       String
+  recordedAt DateTime  @db.Timestamptz(3)   // UTC
+  source     String?
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt      @db.Timestamptz(3)
+
+  user       User      @relation(fields: [userId], references: [id])
+
+  // 時系列ダッシュボード・集計で効く
+  @@index([userId, recordedAt])
+  @@index([userId, kind, recordedAt])
+
+  // 同一タイムスタンプ・同一種類の重複防止（デバイス二重送信対策）
+  @@unique([userId, kind, recordedAt], name: "unique_vital_per_point")
+}
+
+enum VitalKind {
+  WEIGHT         // 体重 (kg)
+  BODY_TEMP      // 体温 (°C)
+  RESTING_HR     // 安静時心拍 (bpm)
+  BLOOD_GLUCOSE  // 血糖 (mg/dL)
+}
+
+// 血液検査（1行=ある項目の測定結果）
+model LabResult {
+  id           String    @id @default(cuid())
+  userId       String
+  testName     String
+  valueNum     Decimal   @db.Decimal(10,3)  // 例: 1234567.890 まで（要件に合わせて）
+  unit         String
+  refLow       Decimal?  @db.Decimal(10,3)
+  refHigh      Decimal?  @db.Decimal(10,3)
+  collectedAt  DateTime  @db.Timestamptz(3) // 採血日時（UTC）
+  labSource    String?
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt      @db.Timestamptz(3)
+
+  user         User      @relation(fields: [userId], references: [id])
+
+  // 期間絞り込みや一覧で効く
+  @@index([userId, collectedAt])
+  // 項目別の時系列推移（HbA1cだけ…など）
+  @@index([userId, testName, collectedAt])
+  // 同じ採血で同じ項目を二重登録しない
+  @@unique([userId, testName, collectedAt], name: "unique_lab_marker_per_draw")
+}
+
