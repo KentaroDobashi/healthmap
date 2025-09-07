@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: healthmap
+    ports: ["5432:5432"]
+    volumes: [db_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["8025:8025", "1025:1025"]
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/healthmap?schema=public
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: please-change-me
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["3000:3000"]
+    volumes:
+      - ./apps/web:/app                 # ソース（ホットリロード）
+      - web_node_modules:/app/node_modules  # ← 名前付きボリュームで永続化
+    command: sh -lc "[ -d node_modules ] || pnpm install; if [ ! -d prisma/migrations ]; then npx prisma migrate dev --name init; else npx prisma migrate dev; fi; pnpm dev" 
+
+volumes:
+  db_data:
+  web_node_modules:

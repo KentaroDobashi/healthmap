@@ -1,0 +1,17 @@
+node_modules
+
+# Next.js ビルド成果物（ホスト側キャッシュ）
+.next
+
+# TypeScript / Babel の出力
+dist
+
+# Git 履歴（巨大なので不要）
+.git
+
+# Docker 設定ファイル
+Dockerfile*
+docker-compose.yml
+
+# ローカル専用の環境変数
+.env.local
