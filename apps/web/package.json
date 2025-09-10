@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "pnpm prisma:deploy:prod && next build --turbopack",
+    "prisma:deploy:prod": "sh -c 'if [ \"$VERCEL_ENV\" = \"production\" ]; then prisma migrate deploy; else echo \"[skip] prisma migrate deploy (VERCEL_ENV=$VERCEL_ENV)\"; fi'",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
