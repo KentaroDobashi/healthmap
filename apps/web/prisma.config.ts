@@ -1,4 +1,5 @@
-import { defineConfig } from "prisma/config";
-export default defineConfig({
-  schema: "prisma/schema.prisma",
-});
+export default {
+  schema: 'prisma/schema.prisma',
+  // seed を使うなら ↓ のコメントを外す
+  // seed: 'tsx prisma/seed.ts',
+};

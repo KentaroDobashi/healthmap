@@ -1,0 +1,9 @@
+{
+  "name": "healthmap",
+  "private": true,
+  "packageManager": "pnpm@10.13.1",
+  "scripts": {
+    "build:web": "pnpm --filter ./apps/web build",
+    "dev:web": "pnpm --filter ./apps/web dev"
+  }
+}

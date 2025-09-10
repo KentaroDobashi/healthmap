@@ -1,0 +1,12 @@
+# /workspaces/healthmap/pnpm-workspace.yamlへ移動
+
+packages:
+  - "apps/*"
+
+# approve-builds で「許可」したい依存はここに列挙（必要なものだけ）
+allowedBuiltDependencies:
+  - "@prisma/engines"
+  - "@tailwindcss/oxide"
+  - esbuild
+  - sharp
+  - prisma

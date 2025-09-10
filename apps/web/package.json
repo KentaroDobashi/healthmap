@@ -6,7 +6,13 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate",
+    "prisma": "dotenv -e .env -- prisma",
+    "prisma:status": "dotenv -e .env -- prisma migrate status",
+    "prisma:dev": "dotenv -e .env -- prisma migrate dev",
+    "prisma:deploy": "dotenv -e .env -- prisma migrate deploy",
+    "prisma:studio": "dotenv -e .env -- prisma studio"
   },
   "dependencies": {
     "@prisma/client": "6.15.0",
@@ -20,11 +26,15 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "prisma": "6.15.0",
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

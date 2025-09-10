@@ -1,6 +1,6 @@
 // prisma/seed.ts
 import { PrismaClient, VitalKind, Prisma } from '@prisma/client';
-import type { PrismaPromise } from '@prisma/client';
+import type { PrismaPromise, SleepSession, VitalSample, LabResult } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const D = (n: number | string) => new Prisma.Decimal(n);
@@ -24,7 +24,7 @@ async function main() {
     }));
 
   // ---- Sleep: 直近14日（upsertで冪等）----
-  const sleepCreates: PrismaPromise<any>[] = [];
+  const sleepCreates: PrismaPromise<SleepSession>[] = [];
   for (let i = 0; i < 14; i++) {
     const start = new Date(daysAgo(i).setHours(23, 0, 0, 0));
     const totalMin = 360 + Math.floor(Math.random() * 120);
@@ -72,7 +72,7 @@ async function main() {
   const temp = (36.5 + Math.random() * 0.5 - 0.25).toFixed(2);
   const rhr = 60 + Math.floor(Math.random() * 10);
 
-  const vitalCreates: PrismaPromise<any>[] = [
+  const vitalCreates: PrismaPromise<VitalSample>[] = [
     prisma.vitalSample.upsert({
       // @@unique([userId, kind, recordedAt], name: "unique_vital_per_point")
       where: {
@@ -131,14 +131,20 @@ async function main() {
   ];
 
   // ---- Labs（Decimal & upsert）----
-  const labs = [
+  const labs: Array<{
+  testName: string;
+  valueNum: string;
+  unit: string;
+  refLow?: string;
+  refHigh?: string;
+}>  = [
     { testName: 'HbA1c', valueNum: '5.4', unit: '%', refLow: '4.6', refHigh: '6.2' },
     { testName: 'LDL-C', valueNum: '115', unit: 'mg/dL', refLow: '60', refHigh: '139' },
     { testName: 'ALT', valueNum: '22', unit: 'U/L', refLow: '7', refHigh: '45' },
   ];
   const drawAt = daysAgo(7);
 
-  const labCreates: PrismaPromise<any>[] = labs.map((l) =>
+  const labCreates: PrismaPromise<LabResult>[] = labs.map((l) =>
     prisma.labResult.upsert({
       // @@unique([userId, testName, collectedAt], name: "unique_lab_marker_per_draw")
       where: {
